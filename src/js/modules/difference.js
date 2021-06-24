@@ -1,7 +1,9 @@
 export default class Difference {
   constructor(container, cards, btns) {
     this.container = document.querySelector(container);
+    try {
     this.cards = this.container.querySelectorAll(cards);
+    } catch(e) {}
     this.btns = document.querySelector(btns);
     this.counter = 0;
   }
@@ -28,7 +30,9 @@ export default class Difference {
   }
 
   init() {
-    this.hideCards();
-    this.bindTriggers();
+    try {
+      this.hideCards();
+      this.bindTriggers();
+    } catch(e) {}
   }
 }
