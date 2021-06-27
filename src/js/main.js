@@ -3,6 +3,8 @@ import MiniSlider from "./modules/slider/mini-slider";
 import Player from "./modules/player";
 import Difference from "./modules/difference";
 import Forms from "./modules/forms";
+import ShowInfo from "./modules/showInfo";
+import Download from "./modules/download";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -58,4 +60,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const forms = new Forms("form", "input", "http://localhost:3000/question");
   forms.init();
+
+  const showInfo = new ShowInfo(".module__info-show .plus");
+  showInfo.init();
+
+  const download = new Download(".download");
+  download.init();
 });

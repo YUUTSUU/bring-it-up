@@ -342,6 +342,36 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/array-method-has-species-support.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/core-js/internals/array-method-has-species-support.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return V8_VERSION >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/array-species-create.js":
 /*!****************************************************************!*\
   !*** ./node_modules/core-js/internals/array-species-create.js ***!
@@ -3001,6 +3031,38 @@ exports.f = wellKnownSymbol;
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es.array.filter.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.filter.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var $filter = __webpack_require__(/*! ../internals/array-iteration */ "./node_modules/core-js/internals/array-iteration.js").filter;
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('filter');
+// Edge 14- issue
+var USES_TO_LENGTH = HAS_SPECIES_SUPPORT && !fails(function () {
+  [].filter.call({ length: -1, 0: 1 }, function (it) { throw it; });
+});
+
+// `Array.prototype.filter` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+  filter: function filter(callbackfn /* , thisArg */) {
+    return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es.array.iterator.js":
 /*!***********************************************************!*\
   !*** ./node_modules/core-js/modules/es.array.iterator.js ***!
@@ -5065,6 +5127,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_player__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/player */ "./src/js/modules/player.js");
 /* harmony import */ var _modules_difference__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/difference */ "./src/js/modules/difference.js");
 /* harmony import */ var _modules_forms__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/forms */ "./src/js/modules/forms.js");
+/* harmony import */ var _modules_showInfo__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./modules/showInfo */ "./src/js/modules/showInfo.js");
+/* harmony import */ var _modules_download__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./modules/download */ "./src/js/modules/download.js");
+
+
 
 
 
@@ -5115,6 +5181,10 @@ window.addEventListener("DOMContentLoaded", function () {
   officernew.init();
   var forms = new _modules_forms__WEBPACK_IMPORTED_MODULE_4__["default"]("form", "input", "http://localhost:3000/question");
   forms.init();
+  var showInfo = new _modules_showInfo__WEBPACK_IMPORTED_MODULE_5__["default"](".module__info-show .plus");
+  showInfo.init();
+  var download = new _modules_download__WEBPACK_IMPORTED_MODULE_6__["default"](".download");
+  download.init();
 });
 
 /***/ }),
@@ -5194,6 +5264,70 @@ function () {
   }]);
 
   return Difference;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/js/modules/download.js":
+/*!************************************!*\
+  !*** ./src/js/modules/download.js ***!
+  \************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Download; });
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Download =
+/*#__PURE__*/
+function () {
+  function Download(triggers) {
+    _classCallCheck(this, Download);
+
+    this.btns = document.querySelectorAll(triggers);
+    this.path = "assets/img/mainbg.jpg";
+  }
+
+  _createClass(Download, [{
+    key: "downloadItem",
+    value: function downloadItem(path) {
+      var element = document.createElement("a");
+      element.setAttribute("href", path);
+      element.setAttribute("download", "nice_picture");
+      element.style.display = "none";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
+  }, {
+    key: "init",
+    value: function init() {
+      var _this = this;
+
+      this.btns.forEach(function (btn) {
+        btn.style.cursor = "pointer";
+        btn.addEventListener("click", function (event) {
+          event.preventDefault();
+
+          _this.downloadItem(_this.path);
+        });
+      });
+    }
+  }]);
+
+  return Download;
 }();
 
 
@@ -5407,8 +5541,11 @@ function () {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Player; });
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
-/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.filter */ "./node_modules/core-js/modules/es.array.filter.js");
+/* harmony import */ var core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_filter__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__);
+
 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -5426,6 +5563,7 @@ function () {
     this.btns = document.querySelectorAll(triggers);
     this.overlay = document.querySelector(overlay);
     this.close = this.overlay.querySelector(".close");
+    this.onPlayerStateChange = this.onPlayerStateChange.bind(this);
   }
 
   _createClass(Player, [{
@@ -5433,15 +5571,35 @@ function () {
     value: function bindTriggers() {
       var _this = this;
 
-      this.btns.forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          if (document.querySelector("iframe#frame")) {
-            _this.overlay.style.display = "flex";
-          } else {
-            _this.overlay.style.display = "flex";
-            var path = btn.getAttribute("data-url");
+      this.btns.forEach(function (btn, i) {
+        try {
+          var blockedItem = btn.closest(".module__video-item").nextElementSibling;
 
-            _this.createPlayer(path);
+          if (i % 2 == 0) {
+            blockedItem.setAttribute("data-disabled", "false");
+          }
+        } catch (e) {}
+
+        btn.addEventListener("click", function () {
+          if (!btn.closest(".module__video-item") || btn.closest(".module__video-item").getAttribute("data-disabled") !== "false") {
+            _this.activeBtn = btn;
+
+            if (document.querySelector("iframe#frame")) {
+              _this.overlay.style.display = "flex";
+
+              if (_this.path !== btn.getAttribute("data-url")) {
+                _this.path = btn.getAttribute("data-url");
+
+                _this.player.loadVideoById({
+                  videoId: _this.path
+                });
+              }
+            } else {
+              _this.overlay.style.display = "flex";
+              _this.path = btn.getAttribute("data-url");
+
+              _this.createPlayer(_this.path);
+            }
           }
         });
       });
@@ -5454,7 +5612,9 @@ function () {
       this.close.addEventListener("click", function () {
         _this2.overlay.style.display = "none";
 
-        _this2.player.stopVideo();
+        try {
+          _this2.player.stopVideo();
+        } catch (e) {}
       });
       this.overlay.addEventListener("click", function (event) {
         if (event.target === _this2.overlay) {
@@ -5467,25 +5627,111 @@ function () {
   }, {
     key: "createPlayer",
     value: function createPlayer(url) {
-      this.player = new YT.Player('frame', {
-        height: '100%',
-        width: '100%',
-        videoId: "".concat(url)
+      try {
+        this.player = new YT.Player('frame', {
+          height: '100%',
+          width: '100%',
+          videoId: "".concat(url),
+          events: {
+            'onStateChange': this.onPlayerStateChange
+          }
+        });
+      } catch (e) {}
+    }
+  }, {
+    key: "onPlayerStateChange",
+    value: function onPlayerStateChange(event) {
+      try {
+        var blockedItem = this.activeBtn.closest(".module__video-item").nextElementSibling;
+        var playIcon = this.activeBtn.querySelector("svg").cloneNode(true);
+
+        if (event.data === 0) {
+          if (blockedItem.querySelector(".play__circle").classList.contains("closed")) {
+            blockedItem.querySelector(".play__circle").classList.remove("closed");
+            blockedItem.querySelector(".play__circle svg").remove();
+            blockedItem.querySelector(".play__circle").appendChild(playIcon);
+            blockedItem.querySelector(".play__text").classList.remove("attention");
+            blockedItem.querySelector(".play__text").textContent = "play video";
+            blockedItem.style.opacity = 1;
+            blockedItem.style.filter = "none";
+            blockedItem.setAttribute("data-disabled", "true");
+          }
+        }
+      } catch (e) {}
+    }
+  }, {
+    key: "init",
+    value: function init() {
+      if (this.btns.length > 0) {
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        this.bindTriggers();
+        this.bindClose();
+      }
+    }
+  }]);
+
+  return Player;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/js/modules/showInfo.js":
+/*!************************************!*\
+  !*** ./src/js/modules/showInfo.js ***!
+  \************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return ShowInfo; });
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var ShowInfo =
+/*#__PURE__*/
+function () {
+  function ShowInfo(triggers) {
+    _classCallCheck(this, ShowInfo);
+
+    this.btns = document.querySelectorAll(triggers);
+  }
+
+  _createClass(ShowInfo, [{
+    key: "bindTriggers",
+    value: function bindTriggers() {
+      this.btns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (this.closest(".module__info-show").nextElementSibling.style.display === "block") {
+            this.closest(".module__info-show").nextElementSibling.style.display = "none";
+            this.closest(".module__info-show").nextElementSibling.classList.remove("animated", "fadeIn");
+          } else {
+            this.closest(".module__info-show").nextElementSibling.style.display = "block";
+            this.closest(".module__info-show").nextElementSibling.classList.add("animated", "fadeIn");
+          }
+        });
       });
     }
   }, {
     key: "init",
     value: function init() {
-      var tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
       this.bindTriggers();
-      this.bindClose();
     }
   }]);
 
-  return Player;
+  return ShowInfo;
 }();
 
 
@@ -5704,9 +5950,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
@@ -5720,18 +5966,22 @@ function (_Slider) {
   _inherits(MiniSlider, _Slider);
 
   function MiniSlider(container, next, prev, activeClass, animate, autoPlay) {
+    var _this;
+
     _classCallCheck(this, MiniSlider);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(MiniSlider).call(this, container, next, prev, activeClass, animate, autoPlay));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(MiniSlider).call(this, container, next, prev, activeClass, animate, autoPlay));
+    _this.nextSlide = _this.nextSlide.bind(_assertThisInitialized(_this));
+    return _this;
   }
 
   _createClass(MiniSlider, [{
     key: "decorizeSlides",
     value: function decorizeSlides() {
-      var _this = this;
+      var _this2 = this;
 
       this.slides.forEach(function (slide) {
-        slide.classList.remove(_this.activeClass);
+        slide.classList.remove(_this2.activeClass);
       });
       this.slides[0].classList.add(this.activeClass);
 
@@ -5746,18 +5996,18 @@ function (_Slider) {
 
       this.slides.forEach(function (slide) {
         if (slide.tagName === "BUTTON") {
-          slide.classList.remove(_this.activeClass);
+          slide.classList.remove(_this2.activeClass);
         }
       });
     }
   }, {
     key: "nextSlide",
     value: function nextSlide() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.slides.forEach(function (slide) {
         if (slide.tagName === "BUTTON") {
-          _this2.container.appendChild(slide);
+          _this3.container.appendChild(slide);
         }
       });
       this.container.appendChild(this.slides[0]);
@@ -5766,26 +6016,26 @@ function (_Slider) {
   }, {
     key: "autoPlaySlide",
     value: function autoPlaySlide() {
-      var _this3 = this;
+      var _this4 = this;
 
       this.slidePause = setInterval(function () {
-        _this3.nextSlide();
+        _this4.nextSlide();
       }, 5000);
     }
   }, {
     key: "bindTriggers",
     value: function bindTriggers() {
-      var _this4 = this;
+      var _this5 = this;
 
       this.next.addEventListener("click", function () {
-        _this4.nextSlide();
+        _this5.nextSlide();
       });
       this.prev.addEventListener("click", function () {
-        for (var i = _this4.slides.length - 1; i > 0; i--) {
-          if (_this4.slides[i].tagName !== "BUTTON") {
-            _this4.container.insertBefore(_this4.slides[i], _this4.slides[0]);
+        for (var i = _this5.slides.length - 1; i > 0; i--) {
+          if (_this5.slides[i].tagName !== "BUTTON") {
+            _this5.container.insertBefore(_this5.slides[i], _this5.slides[0]);
 
-            _this4.decorizeSlides();
+            _this5.decorizeSlides();
 
             break;
           }
@@ -5795,7 +6045,7 @@ function (_Slider) {
   }, {
     key: "init",
     value: function init() {
-      var _this5 = this;
+      var _this6 = this;
 
       try {
         this.container.style.cssText = "\n        display: flex;\n        flex-wrap: wrap;\n        overflow: hidden;\n        align-items: flex-start;\n      ";
@@ -5805,10 +6055,10 @@ function (_Slider) {
         if (this.autoPlay) {
           this.autoPlaySlide();
           this.container.addEventListener("mouseenter", function () {
-            clearInterval(_this5.slidePause);
+            clearInterval(_this6.slidePause);
           });
           this.container.addEventListener("mouseleave", function () {
-            _this5.autoPlaySlide();
+            _this6.autoPlaySlide();
           });
         }
       } catch (e) {}
